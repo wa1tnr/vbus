@@ -1,3 +1,5 @@
+Tue  8 Feb 11:30:07 UTC 2022
+
 Connect VBUS to VBUS and GND to GND on the pair of RP2040 boards.
 
 If you wanted to use two host PC's (one for each USB port) then the consideration becomes slightly more complex. ;)
