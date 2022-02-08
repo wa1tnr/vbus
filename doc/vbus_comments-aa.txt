@@ -1,0 +1,118 @@
+Connect VBUS to VBUS and GND to GND on the pair of RP2040 boards.
+
+If you wanted to use two host PC's (one for each USB port) then the consideration becomes slightly more complex. ;)
+
+Connecting them in parallel in this way ensures they both start at the exact same instant, rather than one of them backpowering the other through shared port pin connections.
+
+and starting unreliably (or not at all)
+
+laptop (batttery only)  to desktop obviates some concerns. ;)
+
+I use an isolation transformer on a 120 VAC powered unit but that's just superstitiousness not well-researched (on my part) engineering practice.
+
+I think if you fully understand the issue with regard to the use of a line powered oscilloscope the rest will fall into place for you.
+
+In general, I prefer single-ended power flow where only one power source exists.
+
+The same USB hub on a desktop PC doesn't worry me; they're both at 5 VDC and in the same chassis.
+
+But I still bond VBUS to VBUS and GND to GND if I'm going to use USB (even occasionally) on both sides.
+
+The original issue I had addressed was backpowering a SAMD21 board through the USART pins.  It surprised me, so I looked into it.
+
+Simplest answer was to bond the USB power pins on both ends.  That solved it.
+
+If you have a  preferred direction of power flow you can also toss in a schottky diode in the VBUS to VBUS connection.
+
+(comment received)
+
+They very strongly disrecommend cutting power or ground on any USB cable.
+
+The one I was thinking about was when your project has its own source of 5 VDC.
+
+And you're worried about backfeeding that source of 5 VDC into your host PC chassis.
+
+(later)
+
+something like this:
+
+USB does not permit driving currents down the D+/D- data lines unless the 5V line is powered.
+
+from:
+
+(july 18, 2012 10:26 Yann Vernier)
+
+https://electronics.stackexchange.com/questions/35885/proper-behavior-for-usb-and-5v
+
+I've seen this referenced several times in some form and haven't quite sussed what's what.
+
+'driving currents' sounds suspiciously vague/unsupported as an idea. ;)
+
+But very basically it sounds to me like the device receiving power from a host PC looks for the presence of 5 VDC from VBUS, and if it doesn't find it, something wrong happens.
+
+Obviously if your implementation works it works. ;)
+
+But the general case seems to have that caveat; no unpowered USB connections that still make use of D+ and D- in the conventional manner.
+
+The isolator chip solution starts to look quite attractive, for that instance.
+
+(adafruit has such a breakout)
+
+What I do is simpler: I distribute 5 VDC from a single entry point into my project (which leverages RPi4, STM32F407 Discovery and CP2104 USB to USART bridge).
+
+Really never did adequately solve the two host PC problem. ;)
+
+I keep CP2104 Friend and RPi Pico RP2040 bonded at VBUS and GND.  That works fine.
+
+(and gives me USART access to RP2040 board via USB bridge CP2104)
+
+(Two different projects; one is just a RP2040 with a CP2104; the other is as described)
+
+The other solution to consider is the lower potential terminals of both RP2040's (after the diode that separates it from VBUS).
+
+the pin deep in the corner of RP2040 is the one I use (VBUS).
+
+So, pins 38 and 40 (GND, VBUS, respectively) on RPi Pico RP2040 USD $4 target.
+
+
+This post (in the above URI) by Foxie (last post) seems 'urgent' and possibly correct in some/all details, where they mention:
+
+"So it is absolutely essential that you have a schottky diode in series with Vbus"
+
+I did that in my RPi4/STM32F407 Discovery project to protect the host PC from backfeeding power to its USB port. 
+
+I also put in a schottky to prevent powering RPi4 from that same host PC's USB port, which it was doing (much to my surprise!) until I made the correction.
+
+I'd cutoff the regular RPi4 power supply but the system didn't go down. ;)
+
+The power path was: host PC USB > STM32F407 Discovery > RPi4 (pin header).
+
+oops.
+
+It was meant for the other direction (RPi4 pin header 5V > STM32F407 Discovery).
+
+Normally that's all I need; but the USB was temporarily connected to the Discovery to reflash it.
+
+Original concern documented here:
+
+https://forums.adafruit.com/viewtopic.php?f=24&t=130242
+
+(in practice the 10k resistors inline for the USART signals proved adequate)
+
+fig 6.2 interesting:
+
+http://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232R.pdf
+
+more here:
+
+https://electronics.stackexchange.com/questions/55445/does-a-self-powered-usb-device-have-to-connect-to-vcc-from-the-host-port
+
+"Therefore, the USB VBUS is an important "side-band" signal in USB connect protocol."
+
+That seems like game, set and match, to me.
+
+and this (same uri):
+
+"For the same reason, the pullup resistor -- which both notifies a host that a device has been plugged in, and identifies its initial speed -- should be referenced to VBUS, not the device's local supply. –  Dave Tweed Jan 19 '13 at 1:27"
+
+END.
